@@ -59,7 +59,7 @@
   <tr><th>样例</th><th>输入</th><th>已有生成结果</th></tr>
   <tr><td>cat</td><td><img src="input/cat.png" width="360" alt="cat 输入图"></td><td><img src="output/result/cat_result.png" width="360" alt="cat 历史生成结果"></td></tr>
   <tr><td>cup</td><td><img src="input/cup.jpg" width="360" alt="cup 输入图"></td><td><img src="output/result/cup_result.png" width="360" alt="cup 历史生成结果"></td></tr>
-  <tr><td>human</td><td><img src="input/human.png" width="360" alt="human 输入图"></td><td><img src="output/result/human_result.png" width="360" alt="human 历史生成结果"></td></tr>
+  <tr><td>human</td><td><img src="input/human1.png" width="360" alt="human1 输入图"></td><td><img src="output/result/human1_result.png" width="360" alt="human1 历史生成结果"></td></tr>
   <tr><td>human2</td><td><img src="input/human2.png" width="360" alt="human2 输入图"></td><td><img src="output/result/human2_result.png" width="360" alt="human2 历史生成结果"></td></tr>
   <tr><td>jian1</td><td><img src="input/jian1.png" width="360" alt="jian1 输入图"></td><td><img src="output/result/jian1_result.png" width="360" alt="jian1 历史生成结果"></td></tr>
   <tr><td>jian2</td><td><img src="input/jian2.png" width="360" alt="jian2 输入图"></td><td><img src="output/result/jian2_result.png" width="360" alt="jian2 历史生成结果"></td></tr>
