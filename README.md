@@ -25,9 +25,11 @@
 - [验证、限制与排障](#验证限制与排障)
 - [仓库整理与发布](#仓库整理与发布)
 
-## 目标与示例
+## 角色与权重
 
 本项目现有的唯一测试角色为Honkai: Star Rail的March 7th。
+
+项目得到的该角色权重已上传至 Hugging Face：[ZerothX/endless-xxx-character-37-sdxl-lora](https://huggingface.co/ZerothX/endless-xxx-character-37-sdxl-lora)
 
 ### 人物角色化的目标
 
