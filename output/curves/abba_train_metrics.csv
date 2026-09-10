@@ -1,0 +1,2 @@
+step,epoch,loss,lr,eval_loss
+10,5,0.487713,0.00010000,

@@ -1,0 +1,182 @@
+{
+  "name": "37",
+  "version": 3,
+  "fingerprint": "e2c0614d920d00510bd1",
+  "palette": [
+    {
+      "role": "dominant",
+      "hex": "#7f7eb6",
+      "ratio": 0.124
+    },
+    {
+      "role": "secondary",
+      "hex": "#f9ece9",
+      "ratio": 0.4948
+    },
+    {
+      "role": "tertiary",
+      "hex": "#d195ae",
+      "ratio": 0.1125
+    }
+  ],
+  "mode": "light",
+  "assets": {
+    "accessory": "/themes/37/e2c0614d920d00510bd1/accessory.png",
+    "signature": null
+  },
+  "provenance": {
+    "weight": "D:\\Python All\\Pytorch Study\\Endless_xxx\\output\\train_models\\37_final.safetensors",
+    "accessory_source": "013.png",
+    "segmentation": [
+      {
+        "file": "001.png",
+        "method": "sam2",
+        "coverage": 0.3541785037878788,
+        "border_coverage": 0.34900442477876104,
+        "status": "accepted"
+      },
+      {
+        "file": "002.png",
+        "method": "sam2",
+        "coverage": 0.07307323619631902,
+        "border_coverage": 0.0,
+        "status": "accepted"
+      },
+      {
+        "file": "003.png",
+        "method": "sam2",
+        "coverage": 0.5573486328125,
+        "border_coverage": 0.5758928571428571,
+        "status": "accepted"
+      },
+      {
+        "file": "004.png",
+        "method": "sam2",
+        "coverage": 0.07941964285714286,
+        "border_coverage": 0.0,
+        "status": "accepted"
+      },
+      {
+        "file": "005.png",
+        "method": "sam2",
+        "coverage": 0.4609375,
+        "border_coverage": 0.33579335793357934,
+        "status": "accepted"
+      },
+      {
+        "file": "006.png",
+        "method": "sam2",
+        "coverage": 0.587497179602888,
+        "border_coverage": 0.018425460636515914,
+        "status": "accepted"
+      },
+      {
+        "file": "007.png",
+        "method": "sam2",
+        "coverage": 0.6163101946721311,
+        "border_coverage": 0.0,
+        "status": "accepted"
+      },
+      {
+        "file": "008.png",
+        "method": "sam2",
+        "coverage": 0.10869015242552653,
+        "border_coverage": 0.0,
+        "status": "accepted"
+      },
+      {
+        "file": "009.png",
+        "method": "sam2",
+        "coverage": 0.0599912739965096,
+        "border_coverage": 0.0,
+        "status": "accepted"
+      },
+      {
+        "file": "010.png",
+        "method": "sam2",
+        "coverage": 0.5031565917062101,
+        "border_coverage": 0.6096196868008948,
+        "status": "rejected_geometry"
+      },
+      {
+        "file": "011.png",
+        "method": "border_connected_white",
+        "coverage": 0.7805269298075054,
+        "border_coverage": 0.7369337979094077,
+        "status": "accepted"
+      },
+      {
+        "file": "012.png",
+        "method": "source_alpha",
+        "coverage": 0.58678466796875,
+        "border_coverage": 0.0,
+        "status": "accepted"
+      },
+      {
+        "file": "013.png",
+        "method": "source_alpha",
+        "coverage": 0.528837890625,
+        "border_coverage": 0.0,
+        "status": "accepted"
+      },
+      {
+        "file": "014.png",
+        "method": "sam2",
+        "coverage": 0.7493809586864407,
+        "border_coverage": 0.31564748201438847,
+        "status": "accepted"
+      },
+      {
+        "file": "015.png",
+        "method": "sam2",
+        "coverage": 0.06262412383177571,
+        "border_coverage": 0.0014044943820224719,
+        "status": "accepted"
+      },
+      {
+        "file": "016.png",
+        "method": "sam2",
+        "coverage": 0.08275983146067416,
+        "border_coverage": 0.0,
+        "status": "accepted"
+      },
+      {
+        "file": "017.png",
+        "method": "border_connected_white",
+        "coverage": 0.8369626696832579,
+        "border_coverage": 0.5854898336414048,
+        "status": "accepted"
+      },
+      {
+        "file": "018.png",
+        "method": "sam2",
+        "coverage": 0.2073182689793428,
+        "border_coverage": 0.4777227722772277,
+        "status": "accepted"
+      },
+      {
+        "file": "019.png",
+        "method": "sam2",
+        "coverage": 0.07057425213675214,
+        "border_coverage": 0.0,
+        "status": "accepted"
+      },
+      {
+        "file": "020.png",
+        "method": "sam2",
+        "coverage": 0.182783203125,
+        "border_coverage": 0.0,
+        "status": "accepted"
+      }
+    ],
+    "palette": {
+      "raw_dominant": "#414979",
+      "mode": "light",
+      "sample_count": 66437,
+      "method": "foreground hue families; highlight textile swatch",
+      "ratios_are_selected_pixel_fractions_not_page_area": true
+    }
+  },
+  "warnings": [],
+  "quality": "automatic_needs_visual_review"
+}

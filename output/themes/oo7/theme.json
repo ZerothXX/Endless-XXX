@@ -1,0 +1,31 @@
+{
+  "name": "oo7",
+  "mode": "light",
+  "palette": [
+    {
+      "role": "dominant",
+      "hex": "#EB822D",
+      "ratio": 0.6665
+    },
+    {
+      "role": "secondary",
+      "hex": "#FAFAFA",
+      "ratio": 0.3335
+    },
+    {
+      "role": "tertiary",
+      "hex": "#8B4E1C",
+      "ratio": 0.0
+    }
+  ],
+  "assets": {
+    "accessory": null,
+    "signature": null
+  },
+  "source": "pipeline",
+  "stats": {
+    "n_images": 3,
+    "n_masked": 3,
+    "n_full_fallback": 0
+  }
+}
