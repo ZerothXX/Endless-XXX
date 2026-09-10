@@ -49,12 +49,20 @@
 
 同一个页面骨架，默认使用蓝色科技主题；选择角色后，背景、玻璃面板、边框、点缀和配饰联动变化。
 
-<div>
-  <p>默认主题图</p>
-  <img src="f_example/theme1.png" width="600" alt="默认">
-  <p>角色37主题图</p>
-  <img src="f_example/theme2.png" width="600" alt="角色37主题设计">
-</div>
+<table>
+  <tr>
+    <th>默认主题图</th>
+  </tr>
+  <tr>
+    <td><img src="f_example/theme1.png" width="650" alt="默认"></td>
+  </tr>
+  <tr>
+    <th>角色37主题图</th>
+  </tr>
+  <tr>
+    <td><img src="f_example/theme2.png" width="650" alt="角色37主题设计"></td>
+  </tr>
+</table>
 
 当前页面使用 HTML、CSS、SVG 和 Canvas 实现上述构图方向。
 
