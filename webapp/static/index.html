@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>无尽的xxx · 角色工作室</title><meta name="description" content="本地角色转化、训练与角色主题工作室"><link rel="stylesheet" href="/static/style.css"></head>
+<body>
+<main id="view-cover" class="cover" tabindex="0" role="button" aria-label="点击进入角色工作室">
+  <span class="cover-index">ENDLESS / CHARACTER STUDIO</span><div class="cover-orbit"></div>
+  <canvas class="cover-particles" aria-hidden="true"></canvas><div class="cover-aurora"></div><div class="cover-aurora second"></div>
+  <div class="cover-title"><span>无尽的</span><strong>xxx<span class="blink">_</span></strong><p>CHARACTER · IMAGINATION · CREATION</p></div>
+  <span class="enter">点击进入 <b>↗</b></span><span class="cover-bottom">LOCAL WORKSPACE / 01</span>
+</main>
+<template id="workspace-template">
+ <section class="workspace" hidden>
+  <header class="topline"><button class="back" aria-label="返回封面">‹</button><span class="section-label">AI · GENERATE</span><span class="top-right">// <span class="mode-label">IMAGE GENERATION</span> <i></i> ⌗</span></header>
+  <div class="stage">
+   <div class="grid-texture"></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+   <svg class="thought-cloud" viewBox="0 0 1000 670" preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="cloud-fill" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="var(--cloud-hi)"/><stop offset=".5" stop-color="var(--cloud-mid)"/><stop offset="1" stop-color="var(--cloud-low)"/></linearGradient></defs>
+    <path d="M112 186 C83 117 120 43 192 42 C244 39 277 62 291 82 C315 4 405 1 452 34 C481 53 494 78 499 105 C543 47 624 43 665 75 C693 97 701 116 704 137 C756 82 840 95 876 144 C899 175 902 209 889 240 C972 231 1006 334 957 383 C945 397 930 405 916 410 C964 457 945 536 887 552 C849 564 817 552 799 536 C785 604 708 641 650 611 C633 603 619 591 611 580 C562 658 454 668 391 612 C368 593 356 574 351 555 C306 608 228 617 182 570 C165 553 155 534 152 515 C73 545 14 490 32 431 C38 409 50 393 66 383 C-1 348 -4 263 47 225 C69 208 91 202 112 203 Z"/>
+    <path class="cloud-shine" d="M126 170 C109 100 181 34 252 74 M315 77 C347 16 427 10 466 68 M522 105 C565 59 634 60 670 111 M731 142 C774 109 846 115 868 170 M64 256 C22 301 43 351 73 364 M43 432 C34 483 84 520 136 496 M389 599 C450 649 541 637 583 602 M829 534 C890 560 942 498 916 453"/>
+   </svg>
+   <div class="output-shell"><div class="panel-heading"><span class="small-icon">⌘</span> <span class="output-title">图像生成 · OUTPUT</span><span class="panel-code">01 / RESULT</span></div>
+    <button class="output-display" aria-label="查看生成结果"><div class="empty-output"><span class="diamond">◇</span><strong>生成结果将在此显示</strong><small>选择角色 → 上传图片 → 开始转化</small></div><img class="result-image" alt="生成结果" hidden><pre class="logs" hidden aria-live="polite"></pre></button>
+    <div class="progress-line" hidden><span class="progress-ascii">[          ] 0%</span><progress max="100" value="0"></progress></div>
+    <div class="output-toolbar"><div class="role-split"><span class="character-name"></span><button class="choose-character">选择角色 <span>⌄</span></button></div><button class="save-location pill">▣ <span>查看保存位置</span></button></div>
+    <div class="train-complete" hidden>新角色添加完成</div>
+   </div>
+   <div class="monitor-group"><div class="monitor"><div class="monitor-screen"><button class="upload"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><span class="upload-empty"><b>＋</b><strong>点击上传图片</strong><small>可以上传多张</small></span><img class="input-image" alt="待转化图片" hidden></button></div></div><div class="monitor-neck"></div><div class="monitor-foot"></div>
+    <div class="action-area"><button class="start ribbon" disabled>开始转化 <span>»</span></button><button class="caption-button pill" hidden>标签文件</button></div>
+    <details class="training-settings" hidden><summary>训练参数</summary><label>角色名 <input class="train-name" maxlength="48" placeholder="例如 my_character"></label><label>步数 <input class="train-steps" type="number" min="50" max="10000" value="600"></label><label>分辨率 <select class="train-resolution"><option>512</option><option selected>640</option><option>768</option></select></label><label class="check"><input class="precompute" type="checkbox" checked>训练后构建页面主题（无需训练新模型）</label></details>
+   </div>
+   <div class="cloud-link" aria-hidden="true"><i></i><i></i></div><div class="thinking" hidden><span>0%</span></div>
+   <div class="pm" role="img" aria-label="正在思考的扑满"></div>
+   <div class="bb" role="img" aria-label="帮布"><div class="bb-base"></div><div class="bb-accent"></div></div>
+   <div class="bb-speech"><button class="new-character">添加新角色 <span>➤</span></button><button class="curves" hidden>查看训练曲线 ↗</button></div>
+   <div class="accessories" aria-hidden="true"></div><div class="signature" hidden></div>
+   <footer>CHARACTER · <span class="footer-mode">GENERATION</span><i></i><span class="footer-status">READY</span></footer>
+  </div>
+  <input class="file-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden><input class="caption-input" type="file" accept=".txt" hidden>
+  <div class="toast" role="status" hidden></div>
+  <dialog class="role-dialog"><form method="dialog"><button class="dialog-close" aria-label="关闭">×</button></form><h2>选择角色</h2><p>已完成训练的角色</p><div class="role-list"></div></dialog>
+  <dialog class="theme-dialog"><h2>正在构建角色主题</h2><p class="theme-phase">读取角色资源</p><progress class="theme-progress" max="100" value="0"></progress><small>首次选择角色时时间较长，需要耐心等待</small><button class="cancel-theme pill">取消</button></dialog>
+  <dialog class="gallery"><button class="gallery-close" aria-label="关闭图片浏览">×</button><div class="gallery-row"></div></dialog>
+  <dialog class="caption-dialog"><h2>标签文件</h2><p>可选。文件需命名为 captions.txt，采用 UTF-8 编码，图片名称须与上传图片对应。</p><p>没有标签时，将使用本机 Qwen2.5-VL 自动标注；自动标注可能不准确。</p><button class="pick-caption pill">选择 captions.txt</button><button class="close-caption pill">关闭</button></dialog>
+ </section>
+</template>
+<script type="module" src="/static/app.js"></script>
+<script type="module" src="/static/cover.js"></script>
+</body></html>

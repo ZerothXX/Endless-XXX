@@ -1,0 +1,20 @@
+001.png, front view, full body shot
+002.png, side view, full body shot, right side
+003.png, back view, full body shot
+004.png, side view, full body shot, left side
+005.png, three-quarter view, front
+006.png, front view, face close-up
+007.png, side view, face close-up, right side
+008.png, eyes close-up
+009.png, clothing close-up
+010.png, shoes close-up
+011.png, legs close-up
+012.png, waist accessory close-up
+013.png, shoulder accessory close-up
+014.png, three-quarter view, upper body, left side
+015.png, front view, full body shot
+016.png, front view, upper body
+017.png, side view, upper body, right side
+018.png, front view, upper body
+019.png, front view, upper body
+020.png, front view, upper body
