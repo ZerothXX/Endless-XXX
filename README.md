@@ -3,7 +3,7 @@
 > 面向开放域主体的角色视觉迁移与主题生成框架
 
 <div align="center">
-  <img src="cover.png" width="700" alt="封面">
+  <img src="cover.png" width="800" alt="封面">
 </div>
 
 一个角色视觉迁移与主题生成框架：使用角色参考图训练 LoRA，将角色的视觉特征迁移到人物、动物或物品，并从角色资料自动构建网页主题。
