@@ -38,9 +38,9 @@
 角色37的相机与四瓣徽章是不同的配饰。项目通过配饰特写标注、经过校对的角色卡片和语义约束，分别描述其形状、颜色与使用位置。
 
 <p align="center">
-  <img src="dataset/37/images/012.png" width="240" alt="角色37的相机配饰参考">
+  <img src="dataset/37/images/012.png" width="200" alt="角色37的相机配饰参考">
   &nbsp;
-  <img src="dataset/37/images/013.png" width="240" alt="角色37的四瓣徽章参考">
+  <img src="dataset/37/images/013.png" width="200" alt="角色37的四瓣徽章参考">
   <br>
   <sub>训练/识别参考：012 为相机，013 为徽章。展示素材须随仓库保留，并确认具备公开展示权限。</sub>
 </p>
@@ -49,16 +49,12 @@
 
 同一个页面骨架，默认使用蓝色科技主题；选择角色后，背景、玻璃面板、边框、点缀和配饰联动变化。
 
-<table>
-  <tr>
-    <th>默认主题图</th>
-    <th>角色37主题图</th>
-  </tr>
-  <tr>
-    <td><img src="f_example/theme1.png" width="480" alt="默认"></td>
-    <td><img src="f_example/theme2.png" width="480" alt="角色37主题设计"></td>
-  </tr>
-</table>
+<div>
+  <p>默认主题图</p>
+  <img src="f_example/theme1.png" width="600" alt="默认">
+  <p>角色37主题图</p>
+  <img src="f_example/theme2.png" width="600" alt="角色37主题设计">
+</div>
 
 当前页面使用 HTML、CSS、SVG 和 Canvas 实现上述构图方向。
 
