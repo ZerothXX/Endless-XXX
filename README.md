@@ -55,6 +55,8 @@
 
 以下为项目当前已有文件的输入/输出对比，左侧来自 `input/`，右侧来自 `output/result/`（图片取材自网络）。
 
+在动物和物体的结果处理上还有改进空间，在人形肖像上效果较佳。
+
 <table>
   <tr><th>样例</th><th>输入</th><th>已有生成结果</th></tr>
   <tr><td>cat</td><td><img src="input/cat.png" width="360" alt="cat 输入图"></td><td><img src="output/result/cat_result.png" width="360" alt="cat 历史生成结果"></td></tr>
