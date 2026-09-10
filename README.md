@@ -52,7 +52,7 @@
 <table>
   <tr>
     <th>默认主题图</th>
-    <th>角色37主题图8</th>
+    <th>角色37主题图</th>
   </tr>
   <tr>
     <td><img src="f_example/theme1.png" width="480" alt="默认"></td>
