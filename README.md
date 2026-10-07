@@ -51,50 +51,44 @@
 在动物和物体的结果处理上还有改进空间，在人形肖像上效果较佳。
 
 <table style="border-collapse: collapse; text-align: center; margin: 0 auto;">
+  <!-- 表头：输入 / 输出 -->
   <tr>
-    <td style="padding: 6px;">
-      <img src="input/cat.png" width="200" alt="cat 原图">
-    </td>
-    <td style="padding: 6px;">
-      <img src="output/result/cat_result.png" width="200" alt="cat 效果图">
-    </td>
+    <th style="padding: 4px 8px;">输入</th>
+    <th style="padding: 4px 8px;">输出</th>
     <td style="width: 30px;"></td>
-    <td style="padding: 6px;">
-      <img src="input/cup.jpg" width="200" alt="cup 原图">
-    </td>
-    <td style="padding: 6px;">
-      <img src="output/result/cup_result.png" width="200" alt="cup 效果图">
-    </td>
+    <th style="padding: 4px 8px;">输入</th>
+    <th style="padding: 4px 8px;">输出</th>
   </tr>
+
+  <!-- 第1行：cat / cup -->
   <tr>
-    <td style="padding: 6px;">
-      <img src="input/human1.png" width="200" alt="human1 原图">
-    </td>
-    <td style="padding: 6px;">
-      <img src="output/result/human1_result.png" width="200" alt="human1 效果图">
-    </td>
+    <td style="padding: 6px;"><img src="input/cat.png" width="180" alt="cat 输入图"></td>
+    <td style="padding: 6px;"><img src="output/result/cat_result.png" width="180" alt="cat 历史生成结果"></td>
     <td style="width: 30px;"></td>
-    <td style="padding: 6px;">
-      <img src="input/human2.png" width="200" alt="human2 原图">
-    </td>
-    <td style="padding: 6px;">
-      <img src="output/result/human2_result.png" width="200" alt="human2 效果图">
-    </td>
+    <td style="padding: 6px;"><img src="input/cup.jpg" width="180" alt="cup 输入图"></td>
+    <td style="padding: 6px;"><img src="output/result/cup_result.png" width="180" alt="cup 历史生成结果"></td>
   </tr>
+
+  <tr><td colspan="5" style="height: 30px;"></td></tr>
+
+  <!-- 第2行：human1 / human2 -->
   <tr>
-    <td style="padding: 6px;">
-      <img src="input/jian1.png" width="200" alt="jian1 原图">
-    </td>
-    <td style="padding: 6px;">
-      <img src="output/result/jian1_result.png" width="200" alt="jian1 效果图">
-    </td>
+    <td style="padding: 6px;"><img src="input/human1.png" width="180" alt="human1 输入图"></td>
+    <td style="padding: 6px;"><img src="output/result/human1_result.png" width="180" alt="human1 历史生成结果"></td>
     <td style="width: 30px;"></td>
-    <td style="padding: 6px;">
-      <img src="input/jian2.png" width="200" alt="jian2 原图">
-    </td>
-    <td style="padding: 6px;">
-      <img src="output/result/jian2_result.png" width="200" alt="jian2 效果图">
-    </td>
+    <td style="padding: 6px;"><img src="input/human2.png" width="180" alt="human2 输入图"></td>
+    <td style="padding: 6px;"><img src="output/result/human2_result.png" width="180" alt="human2 历史生成结果"></td>
+  </tr>
+
+  <tr><td colspan="5" style="height: 30px;"></td></tr>
+
+  <!-- 第3行：jian1 / jian2 -->
+  <tr>
+    <td style="padding: 6px;"><img src="input/jian1.png" width="180" alt="jian1 输入图"></td>
+    <td style="padding: 6px;"><img src="output/result/jian1_result.png" width="180" alt="jian1 历史生成结果"></td>
+    <td style="width: 30px;"></td>
+    <td style="padding: 6px;"><img src="input/jian2.png" width="180" alt="jian2 输入图"></td>
+    <td style="padding: 6px;"><img src="output/result/jian2_result.png" width="180" alt="jian2 历史生成结果"></td>
   </tr>
 </table>
 
