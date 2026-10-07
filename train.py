@@ -249,6 +249,16 @@ def main() -> None:
         resolution=resolution,
         image_limit=config.TRAIN_IMAGE_LIMIT,
     )
+    # 网页自由文本描述的 token 预算：文本编码器已加载，这里可以按真实 tokenizer 计算。
+    # 只裁剪 caption_source=="marks"（网页角色描述）的样本；captions.txt / 人工校对
+    # 属于受控数据，超预算仍按下面的严格检查报错。
+    caption_budget = min(pipe.tokenizer.model_max_length, pipe.tokenizer_2.model_max_length)
+
+    def _caption_tokens(text: str) -> int:
+        return max(len(tokenizer(text, truncation=False, verbose=False)["input_ids"])
+                   for tokenizer in (pipe.tokenizer, pipe.tokenizer_2))
+
+    train_ds.fit_prompts(_caption_tokens, caption_budget)
     train_dl = dataset.get_train_dataloader(
         dataset=train_ds,
         batch_size=config.TRAIN_BATCH_SIZE,
@@ -312,7 +322,10 @@ def main() -> None:
                 prompt = train_ds.get_prompt(idx)
                 for tokenizer in (pipe.tokenizer, pipe.tokenizer_2):
                     if len(tokenizer(prompt, truncation=False, verbose=False)["input_ids"]) > tokenizer.model_max_length:
-                        raise ValueError(f"Training caption exceeds CLIP budget: {train_ds.image_paths[idx]}")
+                        raise ValueError(
+                            f"Training caption exceeds CLIP budget: {train_ds.image_paths[idx]}"
+                            f"（受控标注超预算属于数据错误；网页角色描述已在 "
+                            f"CharacterDataset.fit_prompts 中按预算截断）")
                 if prompt not in prompt_cache:
                     prompt_cache[prompt] = tuple(t.detach().cpu() for t in train_utils.encode_prompt(
                         pipe.tokenizer, pipe.tokenizer_2, pipe.text_encoder, pipe.text_encoder_2, prompt))
@@ -459,6 +472,18 @@ def main() -> None:
         f.write(f"梯度检查点           : {config.USE_GRADIENT_CHECKPOINTING}\n")
     print(f"[train] 训练摘要已保存: {summary_path}")
 
+    # ================= 11. 角色包（网页角色列表/删除/推理权重的唯一依据） =================
+    # 网页（web/）只认 output/characters/<角色名>/：角色是否已训练、能否生成、删除角色
+    # 删除的对象都是它（web/server.py 与 web/worker.py 经 character.semantics.audit_switch
+    # 判定）。因此训练收尾必须落一个自包含的角色包，否则网页会认为训练白跑。
+    from character import package as character_package
+    package_info = character_package.build_package(
+        folder, weight_dir=config.TRAIN_MODELS_DIR, curves_dir=config.CURVES_DIR,
+        summary_path=summary_path, category=char_cfg["category"],
+        resolution=resolution, steps=max_steps, trigger=trigger)
+    print(f"[train] 角色包已就绪: {package_info['package']}"
+          f"（含权重 {sorted(package_info['weights'])}）")
+
     print("=" * 60)
     print("[train] 训练完成，产物清单:")
     print(f"  LoRA 权重目录 : {config.TRAIN_MODELS_DIR}")
@@ -470,6 +495,7 @@ def main() -> None:
     print(f"     {folder}_loss_by_step.png / {folder}_loss_by_epoch.png / {folder}_learning_rate.png")
     print(f" 曲线原始数据   : {csv_path}")
     print(f" 日志目录       : {config.LOGS_DIR}（{folder}_train_summary.txt）")
+    print(f" 角色包         : {package_info['package']}（权重 + character.json，网页据此识别角色）")
     print("=" * 60)
 
 

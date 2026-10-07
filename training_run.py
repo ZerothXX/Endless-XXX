@@ -32,7 +32,12 @@ class Tee:
 
 
 def run_isolated(trainer, character, run_root=None):
-    """Stage data before preprocessing; retain source hashes and restore config on exit."""
+    """Stage data before preprocessing; retain source hashes and restore config on exit.
+
+    网页（web/）写入的角色描述文件（marks.txt / mark_refs.txt）与 captions.txt 一样
+    属于训练输入，必须一起复制到隔离目录：漏掉它们会让训练在隔离副本里看不到
+    用户在网页上写的描述，产出与网页流程不一致的权重。
+    """
     root = Path(config.PROJECT_ROOT)
     source = Path(config.DATASET_DIR) / character
     if not (source / "images").is_dir():
@@ -43,8 +48,10 @@ def run_isolated(trainer, character, run_root=None):
     attrs = ("DATASET_DIR", "OUTPUT_DIR", "TRAIN_MODELS_DIR", "CURVES_DIR",
              "LOGS_DIR", "SEMANTIC_DIR", "RESULT_DIR", "CHARACTER_ID")
     previous = {key: getattr(config, key) for key in attrs}
+    staged_files = ("captions.txt", getattr(config, "MARKS_FILE", "marks.txt"),
+                    getattr(config, "MARK_REFS_FILE", "mark_refs.txt"))
     originals = [p for p in (source / "images").iterdir() if p.is_file()]
-    originals += [source / "captions.txt"]
+    originals += [source / name for name in staged_files]
     before = {str(p.resolve()): digest(p) for p in originals if p.is_file()}
     manifest = {"status": "preparing", "character": character,
                 "started_at": datetime.now().isoformat(), "source_hashes": before,
@@ -52,15 +59,18 @@ def run_isolated(trainer, character, run_root=None):
     try:
         staged = out / "dataset" / character
         shutil.copytree(source / "images", staged / "images")
-        if (source / "captions.txt").is_file():
-            shutil.copy2(source / "captions.txt", staged / "captions.txt")
+        for name in staged_files:
+            if (source / name).is_file():
+                shutil.copy2(source / name, staged / name)
         shutil.copy2(Path(config.DATASET_DIR) / "data_preprocessing.py", out / "dataset/data_preprocessing.py")
         config.DATASET_DIR = str(out / "dataset")
         config.CHARACTER_ID = character
         snapshot = out / "source"
         snapshot.mkdir()
         for relative in ("config.py", "train.py", "training_run.py", "dataset.py", "train_utils.py",
-                         "model_utils.py", "image_utils.py", "G24/config_24.py", "G24/train_24.py"):
+                         "model_utils.py", "image_utils.py", "web_inputs.py",
+                         "character/package.py", "character/semantics.py",
+                         "G24/config_24.py", "G24/train_24.py"):
             path = root / relative
             if path.is_file():
                 target = snapshot / relative

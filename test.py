@@ -66,11 +66,40 @@ from vlm.vlm_utils import EVAL_PROMPT, VLMClient
 # 输入 / 角色 / LoRA 路径解析
 # ---------------------------------------------------------------------------
 IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp")   # 输入图片扩展名（规格 §32 批量）
+INPUT_SEQUENCE_TYPES = (list, tuple, set, frozenset)   # INPUT_IMAGE 也接受直接给出的路径序列
+
+
+def _result_layout(folder: str) -> tuple:
+    """返回本次推理的 (结果目录, 文件名前缀)，两者都由 config 模板决定。
+
+    config.RESULT_SUBDIR_TEMPLATE / RESULT_PREFIX_TEMPLATE 是唯一的布局来源，
+    因此命令行与网页使用同一套规则，本文件不需要判断调用方是谁：
+        默认 "<角色>_result" + "<角色>_" → output/result/<角色>_result/<角色>_<输入名>_result.png
+        （web/worker.py 与 web/server.py 按这个布局拼路径并提供 /api/results）
+        两个模板留空则回到平铺布局 output/result/<输入名>_result.png
+    """
+    subdir = str(getattr(config, "RESULT_SUBDIR_TEMPLATE", "") or "").format(character=folder)
+    prefix = str(getattr(config, "RESULT_PREFIX_TEMPLATE", "") or "").format(character=folder)
+    directory = os.path.join(config.RESULT_DIR, subdir) if subdir else config.RESULT_DIR
+    return directory, prefix
 
 
 def _resolve_input_images() -> list:
-    """解析 config.INPUT_IMAGE：文件 -> 单图列表；目录 -> 扫描图片列表（§32 批量）。"""
-    path = config.INPUT_IMAGE
+    """解析 config.INPUT_IMAGE：单文件、目录（规格 §32 批量）或直接给出的路径序列。
+
+    web/worker.py 把上传图片按路径列表赋给 INPUT_IMAGE，这里一并支持，
+    避免调用方为了传多张图再去临时拼一个目录。
+    """
+    source = config.INPUT_IMAGE
+    if isinstance(source, INPUT_SEQUENCE_TYPES):
+        paths = [str(path) for path in source]
+        missing = [path for path in paths if not os.path.isfile(path)]
+        if missing:
+            print(f"[test] 错误: 输入图片不存在: {missing}")
+            return []
+        print(f"[test] 输入为路径列表: {len(paths)} 张图片")
+        return paths
+    path = source
     if os.path.isfile(path):
         print(f"[test] 输入为单文件: {path}")
         return [path]
@@ -90,6 +119,7 @@ def _resolve_character_folder() -> str:
     config.CHARACTER_ID 对应的 dataset/<id>/images/ 存在 -> 直接使用；
     否则扫描 dataset/，多文件夹时自动取排序第一个并打印说明
     （无人值守推理不采用训练菜单式的 input() 交互）。
+    网页任务由 web/worker.py 显式设置 CHARACTER_ID，因此走的是同一条路径。
     """
     folder = config.CHARACTER_ID
     folder_dir = os.path.join(config.DATASET_DIR, folder)
@@ -117,12 +147,17 @@ def _resolve_lora_path(folder: str):
 
 
 def _write_json(path: str, obj) -> None:
-    """写结构化 JSON 文件（UTF-8, indent=2），目录不存在自动创建。"""
+    """写结构化 JSON 文件（UTF-8, indent=2），目录不存在自动创建。
+
+    注意：这里刻意不使用"[test] 已保存:"前缀 —— 网页前端用该前缀的行数统计
+    "已生成第几张图"（web/static/app.js 与 web/server.py），每张结果图必须
+    只对应一行"[test] 已保存:"，附属 JSON 不能把计数顶高。
+    """
     out_dir = os.path.dirname(os.path.abspath(path))
     os.makedirs(out_dir, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
-    print(f"[test] 已保存: {path}")
+    print(f"[test] 已记录: {path}")
 
 
 # ---------------------------------------------------------------------------
@@ -166,6 +201,11 @@ def main() -> None:
     folder = _resolve_character_folder()
     trigger = config.get_trigger(folder)
     print(f"[test] 角色 folder={folder}  trigger={trigger}")
+
+    # 结果布局：由 config 的模板决定，命令行与网页共用同一套规则
+    result_dir, prefix = _result_layout(folder)
+    os.makedirs(result_dir, exist_ok=True)
+    print(f"[test] 结果目录: {result_dir}（文件名前缀 {prefix!r}）")
 
     # ================= 3. VLM 段（主体理解 + 配饰迁移规划，用完即卸载） =================
     # 取舍说明（二选一，选择"VLM 段内先算好各图 plan 再卸载"）：
@@ -227,8 +267,8 @@ def main() -> None:
         planner.subject_image = images[p]      # VLM 规划路径需要主体图片
         plans[p] = planner.plan(subject_reprs[p], accessory)
         stem = os.path.splitext(os.path.basename(p))[0]
-        _write_json(os.path.join(config.RESULT_DIR, f"{stem}_subject.json"), subject_reprs[p])
-        _write_json(os.path.join(config.RESULT_DIR, f"{stem}_adaptation.json"), plans[p])
+        _write_json(os.path.join(result_dir, f"{prefix}{stem}_subject.json"), subject_reprs[p])
+        _write_json(os.path.join(result_dir, f"{prefix}{stem}_adaptation.json"), plans[p])
         print(f"[test] {os.path.basename(p)}: subject_type="
               f"{subject_reprs[p].get('subject_type')} plan.source={plans[p].get('source')}")
 
@@ -255,8 +295,8 @@ def main() -> None:
             mask = segment_subject(images[p], sam)
             mask, _ = validate_subject_mask(mask, images[p].size)
             masks[p] = mask
-            image_utils.save_image(mask, os.path.join(config.RESULT_DIR,
-                                    f"{os.path.splitext(os.path.basename(p))[0]}_subject_mask.png"))
+            image_utils.save_image(mask, os.path.join(result_dir,
+                                    f"{prefix}{os.path.splitext(os.path.basename(p))[0]}_subject_mask.png"))
         else:
             masks[p] = (get_subject_mask_or_full(images[p], sam)
                         if config.USE_SAM and config.SUPPRESS_BACKGROUND_EDGES else None)
@@ -387,14 +427,14 @@ def main() -> None:
         result = pipe(**gen_kwargs).images[0]
         background_audit = {"enabled": False}
         if protect_background:
-            raw_path = os.path.join(config.RESULT_DIR, f"{stem}_raw_result.png")
+            raw_path = os.path.join(result_dir, f"{prefix}{stem}_raw_result.png")
             image_utils.save_image(result, raw_path)
             result, background_audit = preserve_background(img, result, masks[p])
             background_audit.update(enabled=True, raw_result=raw_path,
                                     mask_source="sam_automatic_unverified")
 
         # ---- 落盘：结果图 + 推理记录 txt + 结构化 JSON（规格 §15/§32） ----
-        result_path = os.path.join(config.RESULT_DIR, f"{stem}_result.png")
+        result_path = os.path.join(result_dir, f"{prefix}{stem}_result.png")
         image_utils.save_image(result, result_path)
 
         txt_lines = [
@@ -435,16 +475,17 @@ def main() -> None:
             "说明: subject_repr / adaptation plan 由 VLM 或规则表自动生成，仅供推理参考，"
             "不代表客观事实。",
         ]
-        prompt_txt_path = os.path.join(config.RESULT_DIR, f"{stem}_prompt.txt")
+        prompt_txt_path = os.path.join(result_dir, f"{prefix}{stem}_prompt.txt")
         with open(prompt_txt_path, "w", encoding="utf-8") as f:
             f.write("\n".join(txt_lines))
-        print(f"    已保存: {result_path}")
-        print(f"    已保存: {prompt_txt_path}")
-        _write_json(os.path.join(config.RESULT_DIR, f"{stem}_subject.json"), subject_repr)
-        _write_json(os.path.join(config.RESULT_DIR, f"{stem}_adaptation.json"), plan)
+        # 网页前端按"[test] 已保存:"的行数统计已生成图片数（每张结果图恰好一行）
+        print(f"[test] 已保存: {result_path}")
+        print(f"    已写出: {prompt_txt_path}")
+        _write_json(os.path.join(result_dir, f"{prefix}{stem}_subject.json"), subject_repr)
+        _write_json(os.path.join(result_dir, f"{prefix}{stem}_adaptation.json"), plan)
         with open(p, "rb") as input_file:
             input_hash = hashlib.sha256(input_file.read()).hexdigest()
-        _write_json(os.path.join(config.RESULT_DIR, f"{stem}_generation.json"), {
+        _write_json(os.path.join(result_dir, f"{prefix}{stem}_generation.json"), {
             "seed": actual_seed, "input_sha256": input_hash,
             "lora_path": lora_path, "lora_scale": lora_scale,
             "lora_model_source": config.LORA_MODEL_SOURCE,
@@ -480,9 +521,9 @@ def main() -> None:
         if getattr(eval_client, "available", False):
             for p in image_paths:
                 stem = os.path.splitext(os.path.basename(p))[0]
-                result_path = os.path.join(config.RESULT_DIR, f"{stem}_result.png")
+                result_path = os.path.join(result_dir, f"{prefix}{stem}_result.png")
                 ev = eval_client.analyze_image(image_utils.load_image(result_path), EVAL_PROMPT)
-                eval_path = os.path.join(config.RESULT_DIR, f"{stem}_evaluation.json")
+                eval_path = os.path.join(result_dir, f"{prefix}{stem}_evaluation.json")
                 _write_json(eval_path, ev)
                 print(f"    {stem}: {json.dumps(ev, ensure_ascii=False)}")
             eval_client.unload()
@@ -501,13 +542,13 @@ def main() -> None:
     for p in image_paths:
         stem = os.path.splitext(os.path.basename(p))[0]
         print(f"  {os.path.basename(p)} ->")
-        print(f"      {stem}_result.png       结果图")
-        print(f"      {stem}_prompt.txt       推理记录（prompt/negative/超参/JSON 摘要）")
-        print(f"      {stem}_subject.json     主体分析结构化结果")
-        print(f"      {stem}_adaptation.json  配饰迁移规划结构化结果")
+        print(f"      {prefix}{stem}_result.png       结果图")
+        print(f"      {prefix}{stem}_prompt.txt       推理记录（prompt/negative/超参/JSON 摘要）")
+        print(f"      {prefix}{stem}_subject.json     主体分析结构化结果")
+        print(f"      {prefix}{stem}_adaptation.json  配饰迁移规划结构化结果")
         if config.ENABLE_RESULT_EVALUATION:
-            print(f"      {stem}_evaluation.json 结果评价（VLM 主观分数，规格 §21）")
-    print(f"[test] 输出目录: {config.RESULT_DIR}")
+            print(f"      {prefix}{stem}_evaluation.json 结果评价（VLM 主观分数，规格 §21）")
+    print(f"[test] 输出目录: {result_dir}")
     print(f"[test] 总耗时: {time.time() - t_start:.1f} 秒")
     if torch.cuda.is_available():
         print(f"[test] 本进程显存峰值: "

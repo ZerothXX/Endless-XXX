@@ -4,8 +4,11 @@ dataset.py —— 训练数据入口（根目录模块，与 dataset/ 数据目�
 
 职责：
 - 解析 dataset/<角色>/captions.txt（"文件名, 短标签1, 短标签2" 格式，规格 §4.2）
+- 解析网页（web/）输入的逐图标注：mark_refs.txt（一张图一段标注，网页的统一输入方式）
+  与 marks.txt（只有文字的角色描述，兼容保留）
 - 扫描角色文件夹与图片（自动检测实际数量，规格 §4.1）
-- 构建训练 prompt：`ch{folder}, {category}, {tags}`（规格 §4.4）
+- 构建训练 prompt：`ch{folder}, {category}, {quality}, {tags}`（规格 §4.4）
+- validate_dataset：网页 /api/train 的训练前准入检查（图片数量下限）
 - 提供 torch Dataset / DataLoader，供 train.py 使用
 
 注意：prompt 中类别词 category 来自 config.CHARACTER_PRESETS 预设，
@@ -27,6 +30,8 @@ from torchvision import transforms
 from torchvision.transforms import InterpolationMode
 
 import image_utils
+from web_inputs import (ACCESSORY_CLOSEUP_TAG, load_mark_refs, load_marks,  # noqa: F401
+                        merged_marks, remap_mark_refs)
 
 
 def load_captions(caption_file: str) -> dict:
@@ -113,6 +118,71 @@ def scan_images(folder_dir: str) -> list:
     if not paths:
         raise RuntimeError(f"[dataset] 角色图片目录为空: {images_dir}，无法训练")
     return paths
+
+
+# ===========================================================================
+# 网页（web/）输入资料的读取
+# ---------------------------------------------------------------------------
+# 文件格式与解析集中在 web_inputs.py（不依赖 torch，供预处理流程共用）；
+# 这里直接复用，dataset 侧把它们折算成与 captions.txt 相同的 {文件名: [标签]} 语义。
+# ===========================================================================
+
+
+def resolve_captions(folder_dir: str, folder: str = None) -> tuple:
+    """汇总一个角色的全部逐图标签，返回 (标签表, 自由文本文件名集合)。
+
+    标签优先级（后者覆盖前者）：
+        1. captions.txt —— 既有标注体系，命令行路径与网页路径共用
+        2. mark_refs.txt —— 网页"标志图像输入"：一张图一段标注，按文件名精确对应
+        3. config.TRAIN_CAPTION_OVERRIDES —— 人工校对覆盖，最高优先
+    返回的第二个值是"标注由用户自由文本写成"的文件名集合：这类文本长度不可控，
+    训练前需要按 CLIP token 预算裁剪（见 CharacterDataset.fit_prompts）；
+    人工校对覆盖属于受控标注，不计入该集合，超预算仍按错误处理。
+    全局角色描述（marks.txt）不在这里合并：它没有文件名，由调用方作为
+    "无逐图标注图片"的兜底，见 CharacterDataset。
+    """
+    captions = load_captions(os.path.join(folder_dir, "captions.txt"))
+    web_captions = load_mark_refs(folder_dir)
+    captions.update(web_captions)
+    from_web = set(web_captions)
+    if folder:
+        overrides = getattr(config, "TRAIN_CAPTION_OVERRIDES", {}).get(folder, {})
+        captions.update(overrides)
+        from_web -= set(overrides)      # 人工校对过的条目按受控标注对待
+    return captions, from_web
+
+
+def validate_dataset(character: str, minimum: int = None) -> dict:
+    """校验角色是否具备训练条件（web/server.py 的 /api/train 准入检查）。
+
+    - 角色文件夹或 images/ 缺失 -> FileNotFoundError
+    - 图片不足 minimum 张（默认 config.WEB_MIN_TRAIN_IMAGES）-> RuntimeError
+    返回摘要 dict（图片数、标签来源计数），供调用方/网页提示使用。
+    """
+    if minimum is None:
+        minimum = int(getattr(config, "WEB_MIN_TRAIN_IMAGES", 10) or 1)
+    folder_dir = os.path.join(config.DATASET_DIR, str(character))
+    if not os.path.isdir(folder_dir):
+        raise FileNotFoundError(f"[dataset] 角色文件夹不存在: {folder_dir}")
+    paths = scan_images(folder_dir)          # images/ 缺失或为空在此抛异常
+    if len(paths) < minimum:
+        raise RuntimeError(f"[dataset] {character} 只有 {len(paths)} 张图片，"
+                           f"少于训练所需的 {minimum} 张")
+    names = [os.path.basename(path) for path in paths]
+    captions = load_captions(os.path.join(folder_dir, "captions.txt"))
+    refs = load_mark_refs(folder_dir)
+    marks = merged_marks(load_marks(folder_dir))
+    return {
+        "ok": True,
+        "character": str(character),
+        "folder": folder_dir,
+        "minimum": minimum,
+        "images": len(paths),
+        "captions": sum(1 for name in names if name in captions),
+        "mark_refs": sum(1 for name in names if name in refs),
+        "marks": len(marks),
+        "unlabeled": sum(1 for name in names if name not in captions and name not in refs),
+    }
 
 
 class MixedContentCrop:
@@ -228,11 +298,14 @@ def make_transforms(resolution: int, enable_hflip: bool = False,
 class CharacterDataset(Dataset):
     """角色 LoRA 训练数据集。
 
-    数据来源：dataset/<folder>/images/*.png + dataset/<folder>/captions.txt
+    数据来源：dataset/<folder>/images/*.png + 逐图标签 + 网页输入的角色描述
     每个样本返回:
         pixel_values: 图像张量 [3, H, W]（0~1 范围，训练管线自行决定归一化）
-        prompt:       训练文本 `ch{folder}, {category}, {tags}`（规格 §4.4）
-    captions.txt 中未出现的图片使用空标签（角色身份由触发词学习）。
+        prompt:       训练文本 `ch{folder}, {category}, {quality}, {tags}`（规格 §4.4）
+
+    逐图标签优先级见 resolve_captions（mark_refs.txt > captions.txt > 人工校对覆盖）；
+    都没有的图片回退到 marks.txt 的全局角色描述（网页"角色图像输入"的文字），
+    仍然没有时用空标签——角色身份由触发词学习（规格 §4.4）。
     """
 
     def __init__(self, folder: str, resolution: int, image_limit: int = 0, transform=None):
@@ -246,15 +319,23 @@ class CharacterDataset(Dataset):
         if image_limit and image_limit > 0:
             self.image_paths = self.image_paths[:image_limit]
 
-        caption_file = os.path.join(self.folder_dir, "captions.txt")
-        self.captions = load_captions(caption_file)
-        self.captions.update(getattr(config, "TRAIN_CAPTION_OVERRIDES", {}).get(folder, {}))
-        # 提示哪些图片缺少 caption（只提示，不报错：用空标签）
+        self.captions, self.free_text = resolve_captions(self.folder_dir, folder)
+        # 网页输入的全局角色描述：只用于没有逐图标注的图片（不覆盖任何精确标注）
+        self.marks = merged_marks(load_marks(self.folder_dir))
+        if self.marks:
+            print(f"[dataset] 使用网页输入的角色描述 {len(self.marks)} 条，"
+                  f"覆盖 {sum(1 for p in self.image_paths if os.path.basename(p) not in self.captions)}"
+                  f" 张无逐图标注的图片")
+        # 提示哪些图片完全没有标注（只提示，不报错：用空标签）
         missing = [os.path.basename(p) for p in self.image_paths
-                   if os.path.basename(p) not in self.captions]
+                   if os.path.basename(p) not in self.captions and not self.marks]
         if missing:
-            print(f"[dataset] 提示: {len(missing)} 张图片在 captions.txt 中无标注，将使用空标签: "
+            print(f"[dataset] 提示: {len(missing)} 张图片无任何标注，将使用空标签"
+                  f"（角色身份由触发词学习）: "
                   f"{missing[:5]}{'...' if len(missing) > 5 else ''}")
+        if self.free_text:
+            print(f"[dataset] 网页逐图标注 {len(self.free_text)} 条（自由文本，"
+                  f"超 CLIP 预算时按 token 裁剪，不中断训练）")
 
         # 类别词 / 触发词来自 config 预设，保证唯一参数来源
         char_cfg = config.get_character_config(folder)
@@ -280,20 +361,69 @@ class CharacterDataset(Dataset):
     def __getitem__(self, idx: int) -> dict:
         return self.get_item(idx)
 
+    def tags_for(self, filename: str) -> list:
+        """返回某张图片的标签：逐图标注优先，其次网页输入的全局角色描述。"""
+        tags = self.captions.get(filename)
+        if tags:
+            return list(tags)
+        return list(self.marks)
+
+    def caption_source(self, filename: str) -> str:
+        """标签来源："web"（网页逐图标注/角色描述，自由文本）| "captions"（受控标注）| "none"。
+
+        train.py 用它决定超长 prompt 的处理方式：网页自由文本可以按 token 预算裁剪，
+        而 captions.txt / 人工校对属于受控数据，超预算仍按错误处理（保持原有严格性）。
+        """
+        if filename in self.free_text:
+            return "web"
+        if self.captions.get(filename):
+            return "captions"
+        return "web" if self.marks else "none"
+
+    def fit_prompts(self, measure, budget: int) -> int:
+        """按 token 预算裁剪"网页自由文本"来源的 prompt，返回被裁剪的样本数。
+
+        网页的标注是用户随手写的一句话（常见中文长句），token 数不受控；
+        CLIP 双 tokenizer 的 77 token 上限若被突破，train.py 会直接报错终止训练。
+        这里只裁剪 caption_source=="web" 的样本（captions.txt / 人工校对等受控标注
+        仍走原来的严格报错），截断结果记录在 _fitted 中，get_prompt 与缓存/训练循环
+        读取同一份文本，不会出现"缓存用短文本、训练用长文本"的不一致。
+        """
+        self._fitted = {}
+        for idx in range(len(self.image_paths)):
+            tags = self.tags_for(os.path.basename(self.image_paths[idx]))
+            if not tags or self.caption_source(os.path.basename(self.image_paths[idx])) != "web":
+                continue
+            if measure(build_text(self.trigger, self.category, tags)) <= budget:
+                continue
+            text = ", ".join(str(tag) for tag in tags)
+            while text and measure(build_text(self.trigger, self.category, [text])) > budget:
+                text = text[: max(1, int(len(text) * 0.8))]
+            self._fitted[idx] = build_text(self.trigger, self.category, [text] if text else [])
+        if self._fitted:
+            print(f"[dataset] 提示: {len(self._fitted)} 张图片的网页标注超出 "
+                  f"{budget} token 预算，已按预算截断（其余图片的标注未改动）")
+        return len(self._fitted)
+
     def get_prompt(self, idx: int) -> str:
-        tags = self.captions.get(os.path.basename(self.image_paths[idx]), [])
-        return build_text(self.trigger, self.category, tags)
+        fitted = getattr(self, "_fitted", None)
+        if fitted and idx in fitted:
+            return fitted[idx]
+        return build_text(self.trigger, self.category,
+                          self.tags_for(os.path.basename(self.image_paths[idx])))
 
     def evaluation_indices(self):
         """Fixed training diagnostics, not a held-out validation set."""
         indices = []
         for tag in ("full body", "face close-up"):
             match = next((i for i, p in enumerate(self.image_paths)
-                          if any(tag in t.lower() for t in self.captions.get(os.path.basename(p), []))), None)
+                          if any(tag in t.lower()
+                                 for t in self.tags_for(os.path.basename(p)))), None)
             if match is not None and match not in indices:
                 indices.append(match)
         for i, p in enumerate(self.image_paths):
-            if any("accessory close-up" in t.lower() for t in self.captions.get(os.path.basename(p), [])):
+            if any(ACCESSORY_CLOSEUP_TAG in t.lower()
+                   for t in self.tags_for(os.path.basename(p))):
                 if i not in indices:
                     indices.append(i)
         return indices or [0]
@@ -302,8 +432,8 @@ class CharacterDataset(Dataset):
         img_path = self.image_paths[idx]
         img = image_utils.load_image(img_path)          # 读取失败会抛异常并指明路径
         filename = os.path.basename(img_path)
-        tags = self.captions.get(filename, [])
-        is_accessory = any("accessory close-up" in t.lower() for t in tags)
+        tags = self.tags_for(filename)
+        is_accessory = any(ACCESSORY_CLOSEUP_TAG in t.lower() for t in tags)
         transform = self.eval_transform if deterministic else self.transform
         pixel_values = (self.detail_transform if is_accessory else transform)(img)
         prompt = self.get_prompt(idx)
@@ -353,22 +483,30 @@ if __name__ == "__main__":
     print("dataset.py 自检")
     print("=" * 60)
 
-    # 1. captions 解析
-    cap_file = os.path.join(config.DATASET_DIR, config.CHARACTER_ID, "captions.txt")
+    # 1. captions / 网页描述解析
+    folder_dir = os.path.join(config.DATASET_DIR, config.CHARACTER_ID)
+    cap_file = os.path.join(folder_dir, "captions.txt")
     caps = load_captions(cap_file)
     print(f"[1] captions 解析: {cap_file}")
-    print(f"    共 {len(caps)} 条标注，示例: {list(caps.items())[0]}")
+    print(f"    共 {len(caps)} 条标注，示例: {list(caps.items())[0] if caps else '（无）'}")
+    print(f"[1b] 网页资料: 角色描述 {len(load_marks(folder_dir))} 条 / "
+          f"标志图像描述 {len(load_mark_refs(folder_dir))} 条")
+    try:
+        print(f"[1c] 训练准入检查 validate_dataset: "
+              f"{validate_dataset(config.CHARACTER_ID)}")
+    except (FileNotFoundError, RuntimeError) as exc:
+        print(f"[1c] 训练准入检查未通过: {type(exc).__name__}: {exc}")
 
     # 2. 图片扫描
-    folder_dir = os.path.join(config.DATASET_DIR, config.CHARACTER_ID)
     imgs = scan_images(folder_dir)
     print(f"[2] 图片扫描: {folder_dir}")
     print(f"    共 {len(imgs)} 张图片，前 3 张: {[os.path.basename(p) for p in imgs[:3]]}")
 
-    # 3. prompt 合成样例
+    # 3. prompt 合成样例（无逐图标注时回退网页描述，最后才是空标签）
+    first = os.path.basename(imgs[0])
     sample = build_text(config.get_trigger(config.CHARACTER_ID),
                         config.get_character_config(config.CHARACTER_ID)["category"],
-                        caps[os.path.basename(imgs[0])])
+                        caps.get(first) or merged_marks(load_marks(folder_dir)))
     print(f"[3] prompt 样例: {sample!r}")
 
     # 4. Dataset 构造（需 torch，仅 CPU）

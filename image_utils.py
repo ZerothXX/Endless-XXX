@@ -151,8 +151,8 @@ def to_pil(tensor) -> Image.Image:
 def create_dirs() -> None:
     """创建项目运行所需的目录结构（幂等，可重复调用）。
 
-    包括 input/ 与 output/ 下五个子目录（规格 §2），
-    以及训练/推理必需的目录。
+    包括 input/ 与 output/ 下五个子目录（规格 §2）、角色包根目录
+    （config.CHARACTERS_DIR，网页角色列表与删除的依据）以及训练/推理必需目录。
     """
     dirs = [
         config.INPUT_DIR,
@@ -161,6 +161,7 @@ def create_dirs() -> None:
         config.SEMANTIC_DIR,
         config.RESULT_DIR,
         config.LOGS_DIR,
+        config.CHARACTERS_DIR,
     ]
     for d in dirs:
         os.makedirs(d, exist_ok=True)

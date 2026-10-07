@@ -31,6 +31,17 @@ LOGS_DIR         = os.path.join(OUTPUT_DIR, "logs")           # 日志
 OUTPUT_24_DIR = os.path.join(OUTPUT_DIR, "24")              # 24GB训练独立输出根目录
 TRAIN_MODELS_24_DIR = os.path.join(OUTPUT_24_DIR, "train_models")
 
+# 角色包（新网页 web/ 的角色产物根目录，每个角色一个子目录）：
+#   output/characters/<角色名>/
+#       <角色名>_final.safetensors   训练最终权重（角色包的权威权重）
+#       <角色名>_best.safetensors    固定时间步评估最优权重（存在时）
+#       character.json               触发词 / 类别 / 分辨率 / 步数 / 权重摘要
+#       curves/                      本次训练曲线图
+#       train_summary.txt            训练摘要
+# web/server.py 用本目录判断角色是否已训练（character.semantics.audit_switch），
+# 删除角色时删除的也是这个目录（其中的权重一并删除）。
+CHARACTERS_DIR = os.path.join(OUTPUT_DIR, "characters")
+
 # =========================
 # 预训练模型路径（均为相对 PROJECT_ROOT 的路径字符串）
 # =========================
@@ -184,6 +195,26 @@ def get_character_card(folder: str) -> dict:
 
 
 # =========================
+# 网页（web/）输入输出契约
+# =========================
+# 网页收集的角色资料直接写在 dataset/<角色名>/ 下，训练直接读取这些文件
+# （旧网页的 captions.txt 上传入口已废弃；captions.txt 仍兼容）。
+MARK_REFS_FILE = "mark_refs.txt"  # 逐图标注（网页统一输入：一张图 + 一段标注）
+                                  # 行格式：`images/<文件名>\t<描述>`
+MARKS_FILE = "marks.txt"          # 只有文字、没有对应图片的角色描述（每行一条）；
+                                  # 网页界面已不再产生，服务器保留该分支，这里仍兼容读取
+# 全局角色描述（marks.txt）拼进训练 prompt 的字符预算：训练 caption 受 CLIP 双
+# tokenizer 77 token 限制（train.py 超限直接报错），过长时按预算截断并打印提示。
+# 逐图标注（mark_refs.txt）不在这里截断，由 dataset.CharacterDataset.fit_prompts
+# 按 tokenizer 的真实预算裁剪。
+WEB_DESCRIPTION_MAX_CHARS = 240
+# 网页训练的最少图片数（web/server.py 的 /api/train 门槛，与前端提示文案一致）。
+WEB_MIN_TRAIN_IMAGES = 10
+# 角色包内权重视为完整的最小字节数（rank32 SDXL LoRA 约 180MB；此处只拦截断/空文件）。
+CHARACTER_PACKAGE_MIN_WEIGHT_BYTES = 1024 * 1024
+
+
+# =========================
 # 模块开关（全部可关闭以适配 8GB 显存，规格 §3）
 # =========================
 USE_VLM = True                 # 视觉语言模型（角色解析 / 主体理解 / 自动标注）
@@ -215,6 +246,10 @@ LR_SCHEDULER = "constant"           # 身份绑定用恒定 LR（kohya 角色 Lo
                                     # cosine 在 400 步就衰减到 0，等于后半段没在学（此前欠拟合原因之一）
 LR_WARMUP_STEPS = 50
 MAX_TRAIN_STEPS = 800               # 步数控制（与 NUM_EPOCHS 二选一，默认用步数；37 预设为 1000）
+# 概念（网页短程）训练步数：仅作为 config 属性存在，供 web/worker.py 赋值使用
+# （它会和 MAX_TRAIN_STEPS 一起设为短程值）。训练步数的取值规则保持原样，
+# 仍由 CHARACTER_PRESETS / MAX_TRAIN_STEPS 决定，本项不参与计算。
+CONCEPT_TRAIN_STEPS = None
 NUM_EPOCHS = None                   # None 表示不按 epoch 控制，仅由 MAX_TRAIN_STEPS 控制
 SAVE_STEPS = 200                    # 每 N 步保存一次 LoRA checkpoint
 LOG_EVERY_N_STEPS = 10              # 每 N 步打印一次日志
@@ -284,6 +319,13 @@ INFERENCE_MAX_LONG = 960              # 推理长边上限（面积 ≈ 640×960
                                       # 24G 建议随 INFERENCE_RESOLUTION=1024 一起
                                       # 改为 1536，即 1024×1536 上限）
 INFERENCE_SEED = -1                   # -1=随机；>0 时固定种子复现
+# ---- 推理结果布局（命令行与网页共用同一套模板，test.py 不判断调用方） ----
+# RESULT_SUBDIR_TEMPLATE：结果子目录，{character} 展开为角色名；留空 = 直接写 RESULT_DIR
+# RESULT_PREFIX_TEMPLATE：结果与附属文件的名字前缀；留空 = 无前缀
+# 默认布局 output/result/<角色>_result/<角色>_<输入名>_result.png 是 web/server.py 与
+# web/worker.py 拼路径、按角色提供结果图所要求的形式；一个角色的结果集中存放。
+RESULT_SUBDIR_TEMPLATE = "{character}_result"
+RESULT_PREFIX_TEMPLATE = "{character}_"
 LORA_SCALE = 0.9                       # 降低全身训练先验对输入构图的覆盖
 NON_HUMAN_LORA_SCALE = 0.7            # 动物/物品主体的 LoRA 融合比例（压低以抑制训练烙进的 "1girl/少女" 先验，规格 §18.2）
 NEGATIVE_PROMPT = "worst quality, low quality, lowres, bad anatomy, bad hands, blurry, watermark, text"
@@ -328,6 +370,7 @@ if __name__ == "__main__":
     print(f"[路径] SEMANTIC_DIR      = {SEMANTIC_DIR}")
     print(f"[路径] RESULT_DIR        = {RESULT_DIR}")
     print(f"[路径] LOGS_DIR          = {LOGS_DIR}")
+    print(f"[路径] CHARACTERS_DIR    = {CHARACTERS_DIR}（角色包根目录，网页角色列表与删除依据）")
     print(f"[模型] BASE_MODEL_PATH   = {BASE_MODEL_PATH}")
     print(f"[模型] BASE_VAE_PATH     = {BASE_VAE_PATH}")
     print(f"[模型] CONTROLNET_PATH   = {CONTROLNET_PATH}")
@@ -346,13 +389,18 @@ if __name__ == "__main__":
     print(f"[训练] RESOLUTION={RESOLUTION} BATCH={TRAIN_BATCH_SIZE} ACCUM={GRADIENT_ACCUMULATION_STEPS} "
           f"PRECISION={MIXED_PRECISION} RANK={LORA_RANK} ALPHA={LORA_ALPHA}")
     print(f"[训练] LR={LEARNING_RATE} SCHEDULER={LR_SCHEDULER} WARMUP={LR_WARMUP_STEPS} "
-          f"STEPS={MAX_TRAIN_STEPS} EPOCHS={NUM_EPOCHS} SEED={SEED} IMG_LIMIT={TRAIN_IMAGE_LIMIT}")
+          f"STEPS={MAX_TRAIN_STEPS} CONCEPT_STEPS={CONCEPT_TRAIN_STEPS} "
+          f"EPOCHS={NUM_EPOCHS} SEED={SEED} IMG_LIMIT={TRAIN_IMAGE_LIMIT}")
     print(f"[训练] EVAL_LOSS_INTERVAL={EVAL_LOSS_INTERVAL} QUALITY_TAGS={TRAIN_QUALITY_TAGS!r}")
     print(f"[推理] INPUT={INPUT_IMAGE} STEPS={NUM_INFERENCE_STEPS} CFG={GUIDANCE_SCALE} "
           f"CN_SCALE={CONTROLNET_CONDITIONING_SCALE} RES={INFERENCE_RESOLUTION} SEED={INFERENCE_SEED}")
     print(f"[推理] NEG_PROMPT={NEGATIVE_PROMPT[:40]}... CANNY=({CANNY_LOW},{CANNY_HIGH}) "
           f"IMG2IMG_STRENGTH={IMG2IMG_STRENGTH} ANIME_NEG={ANIME_NEGATIVE_PROMPT[:30]}...")
+    print(f"[推理] 结果布局: {RESULT_DIR}\\{RESULT_SUBDIR_TEMPLATE}\\{RESULT_PREFIX_TEMPLATE}<输入名>_result.png"
+          f"（模板留空则平铺到 {RESULT_DIR}）")
     print(f"[推理] LORA_WEIGHT_PATH={LORA_WEIGHT_PATH} LORA_SCALE={LORA_SCALE}")
+    print(f"[网页] 描述文件={MARKS_FILE} / {MARK_REFS_FILE} 描述预算={WEB_DESCRIPTION_MAX_CHARS}字 "
+          f"最少图片={WEB_MIN_TRAIN_IMAGES}")
     print(f"[VLM]  DTYPE={VLM_DTYPE} 4BIT={VLM_LOAD_IN_4BIT} OFFLOAD={VLM_OFFLOAD_CPU} "
           f"MAX_TOKENS={VLM_MAX_NEW_TOKENS} TEMP={VLM_TEMPERATURE}")
     print(f"[环境] HF_ENDPOINT={HF_ENDPOINT}")
