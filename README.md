@@ -40,6 +40,10 @@
 
 界面由 `web/static/` 下的 HTML、CSS 和原生 JS 实现，不引入前端构建工具，也不需要 Node。
 
+<div align="center">
+  <img src="web.png" width="800" alt="web前端">
+</div>
+
 ## 生成效果展示
 
 以下为项目当前已有文件的输入/输出对比，左侧来自 `input/`，右侧来自 `output/result/`（图片取材自网络）。
@@ -338,6 +342,10 @@ python web_ui.py
 训练包含随机时间步，其 loss 本身有波动。诊断使用固定参考、固定噪声以及时间步 150/500/850，记录各参考的噪声预测误差；参考集覆盖整体、脸部与配饰，便于发现局部特征学习不足。
 
 这些参考仍来自训练样本，**不是独立验证集，也不等于视觉质量指标**。best 权重按诊断损失选择，是否优于 final 仍应固定输入和种子进行图像级比较。
+
+<div align="center">
+  <img src="output/curves/37_loss_by_step.png" width="800" alt="loss">
+</div>
 
 ### 3\. 角色卡片与 VLM 分工
 
