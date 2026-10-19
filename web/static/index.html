@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Endless XXX</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="角色导航">
+      <button class="side-home side-item" id="home" title="首页" aria-label="首页">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+        <span class="side-label">首页</span>
+      </button>
+      <div class="side-actions">
+        <button class="side-item action" id="add-role" title="添加新角色"><span class="side-symbol">+</span><span class="side-label">添加新角色</span></button>
+        <button class="side-item action" id="retrain-role" title="重训角色"><span class="side-symbol">↻</span><span class="side-label">重训角色</span></button>
+      </div>
+      <div class="side-divider"></div>
+      <div id="role-list" class="role-list"></div>
+      <button id="restore-roles" class="side-item" hidden title="添加隐藏角色"><span class="side-symbol">⋯</span><span class="side-label">添加角色</span></button>
+    </aside>
+    <main class="main">
+      <section id="cover" class="cover"><h1>Endless XXX</h1></section>
+      <section id="chat" class="chat" hidden>
+        <header class="chat-header"><h2 id="chat-title"></h2></header>
+        <div class="messages" id="messages" aria-live="polite"></div>
+        <div class="composer-wrap">
+          <div class="composer" id="composer">
+            <div class="input-tab" id="input-tab" hidden>
+              <button id="mode-button" aria-haspopup="true" aria-expanded="false">角色图像输入 <span>⌄</span></button>
+              <div id="mode-menu" class="mode-menu" hidden>
+                <button data-mode="character">角色图像输入</button>
+                <button data-mode="mark">标志图像输入</button>
+              </div>
+            </div>
+            <div id="previews" class="previews" aria-label="待发送图片"></div>
+            <textarea id="description" rows="2" placeholder="点击下方‘+’输入图片，不支持输入文字" disabled></textarea>
+            <div class="composer-toolbar">
+              <button id="pick-image" class="tool-button" title="添加图片" aria-label="添加图片">+</button>
+              <button id="open-folder" class="tool-button folder" title="打开文件夹" aria-label="打开文件夹">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 6.5h7l2 2h10v10a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2z"/></svg>
+              </button>
+              <span class="toolbar-spacer"></span>
+              <button id="start-train" class="train-button" hidden>▷开始训练</button>
+              <button id="send" class="send-button" title="发送" aria-label="发送">↩</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <div id="context-menu" class="context-menu" hidden>
+    <button data-action="hide">不显示该角色</button>
+    <button data-action="show">添加角色</button>
+    <button data-action="delete">删除该角色</button>
+  </div>
+  <dialog id="name-dialog" class="small-dialog">
+    <form method="dialog" id="name-form">
+      <h3 id="name-title"></h3>
+      <div id="name-field" class="name-field">
+        <input id="name-input" maxlength="48" placeholder="输入角色名称" autocomplete="off">
+        <button id="name-toggle" type="button" title="选择已有角色" hidden>⌄</button>
+      </div>
+      <div id="name-options" class="name-options" hidden></div>
+      <div class="dialog-actions"><button value="cancel" class="quiet">取消</button><button id="name-confirm" value="confirm" class="primary">确定</button></div>
+    </form>
+  </dialog>
+  <dialog id="show-dialog" class="small-dialog">
+    <h3>添加角色</h3><div id="hidden-roles" class="hidden-roles"></div>
+    <div class="dialog-actions"><button id="close-show" class="quiet">关闭</button></div>
+  </dialog>
+  <dialog id="delete-dialog" class="small-dialog">
+    <h3>删除角色</h3><p id="delete-message"></p>
+    <div class="dialog-actions"><button id="cancel-delete" class="quiet">取消</button><button id="confirm-delete" class="danger">删除角色</button></div>
+  </dialog>
+  <div id="gallery" class="gallery" hidden role="dialog" aria-modal="true" aria-label="查看图片">
+    <button id="gallery-close" class="gallery-close" aria-label="关闭">×</button>
+    <button id="gallery-prev" class="gallery-arrow prev" aria-label="上一张">‹</button>
+    <img id="gallery-image" alt="图片预览">
+    <button id="gallery-next" class="gallery-arrow next" aria-label="下一张">›</button>
+  </div>
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>
