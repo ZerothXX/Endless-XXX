@@ -1,4 +1,19 @@
-# Endless XXX
+# Endless-XXX
+
+[中文](README.md) · [English](README.en.md)
+
+**主项目与应用入口：[Endlexx](https://github.com/ZerothXX/Endlexx)。** 本仓库负责角色 LoRA 训练与开放域主体视觉迁移研究；Endlexx 负责 Agent 工作台、角色知识、多对话、上下文与工具编排。训练核心继续在本仓库维护，两个项目不因首页关联而合并代码或同步版本。
+
+[项目全貌](https://github.com/ZerothXX/Endlexx#readme) · [研究概览](https://github.com/ZerothXX/Endlexx/blob/main/docs/research/overview.md) · [结果与局限](https://github.com/ZerothXX/Endlexx/blob/main/docs/research/results.md) · [应用源码](https://github.com/ZerothXX/Endlexx)
+
+| 能力 | 本研究仓库 | Endlexx 应用 |
+|---|---|---|
+| 角色 LoRA 微调 | 标准训练和 24GB 参数入口 | 尚未集成训练任务/UI |
+| 角色图像迁移 | 研究推理与主体差异策略 | 已接入另一本地推理快照，画质仍有失败项 |
+| 知识库、独立对话与上下文 | 不属于训练核心 | 已实现 |
+| 通用文生图、任意角色包兼容 | 本文不作此保证 | 未作为已验收能力交付 |
+
+**文档基线：** 本次双语说明依据线上提交 [`6bd78d48c4c99bef0be3ecf4f71e8536349c2acb`](https://github.com/ZerothXX/Endless-XXX/tree/6bd78d48c4c99bef0be3ecf4f71e8536349c2acb)，更新于 2026-10-26。本轮只整理文档，未重新训练或推理。Endlexx 的 2026-10-24 推理快照未映射到该提交；使用本仓库权重前请核对底模、触发词、LoRA 格式及角色包元信息，不假定可直接导入应用。
 
 > 面向开放域主体的角色视觉迁移框架
 
@@ -43,9 +58,9 @@
 
 ## 生成效果展示
 
-以下为项目当前已有文件的输入/输出对比，左侧来自 `input/`，右侧来自 `output/result/`（图片取材自网络）。
+以下为已公开的历史输入/输出对比，左侧来自 `input/`，右侧来自 `output/result/`（图片取材自网络）。
 
-在动物和物体的结果处理上还有改进空间，在人形肖像上效果较佳。
+在动物和物体的结果处理上还有改进空间，在人形肖像上效果相对较好。这是定性观察，非统计评测。原始作者与逐图许可、实际种子、完整生效配置和 checkpoint 哈希未记录；不能用当前默认值补作历史参数，也不将这些图当作新版本验收。
 
 <table style="border-collapse: collapse; text-align: center; margin: 0 auto;">
   <!-- 表头：输入 / 输出 -->
@@ -526,9 +541,9 @@ Flask 提供角色列表、资料提交、训练、转化与任务状态接口�
 python -m unittest discover -s tests -v
 ```
 
-当前覆盖构图限制、配饰标签、非人物策略、背景保护、提示词预算，以及隔离训练数据保护、失败恢复、权重选择规则和24GB参数/显存门槛。已在本地完成26项测试；部分测试依赖角色37的样本，真实 tokenizer 测试在缺少本地缓存时可能跳过。本次新前端适配未新增测试。
+当前覆盖构图限制、配饰标签、非人物策略、背景保护、提示词预算，以及隔离训练数据保护、失败恢复、权重选择规则和24GB参数/显存门槛。基线 README 曾记录本地完成26项测试，本次文档更新未重跑研究测试；部分测试依赖角色37的样本，真实 tokenizer 测试在缺少本地缓存时可能跳过。本次新前端适配未新增测试。
 
-这些测试不加载模型，也没有在本机跑通真实训练与推理（本机 `models/` 为空，缺少底模/VAE/VLM/SAM）。完整训练、全部主体的生成质量和第二个真实角色的泛化，不能由单元测试替代，仍需在具备模型与显存的机器上端到端验收。
+这些测试不加载模型。基线文档记录其验收机器 `models/` 为空，未跑通真实训练与推理；这不否认已公开历史图片的存在，也不把历史图片当作该次验收结果。完整训练、全部主体的生成质量和第二个真实角色的泛化，不能由单元测试替代，仍需在具备模型与显存的机器上端到端验收。
 
 常见问题：
 
@@ -542,13 +557,11 @@ python -m unittest discover -s tests -v
 * **暂停后继续**：当前暂停会终止任务；重新开始不是 checkpoint 续训。训练任务重启使用原任务参数，而不是后来修改的表单值。
 * **训练曲线下降但图片不好**：诊断 loss 是拟合指标，应独立检查脸部、服装、配饰、构图和非人物结构。
 
-## 仓库整理与发布
+## 发布与维护
 
-### 本轮已移除的内容
+训练与推理实现保留在本仓库，不将历史已移除的前端或主题系统当作当前入口。保留 README 引用的公开展示图与 `G24/README_G24.md`、`dataset/data_preprocessing.py` 等源码；不要把整个 `dataset/` 或 `output/` 一刀切删除后留下失效展示。
 
-旧前端 `webapp/`、`build_theme.py`、主题（theme）子系统、`histories/`、`f_example/`、`example/`、`docs/` 以及 `output/themes/`、`output/web_themes/` 都已移除（早期移除的文件在回收站，可恢复）。当前目录只保留入口、共享模块、`web/`、`dataset/`、`G24/`、`tests/`、`models/`、`input/`、`output/` 与 README 本身引用的素材。
+上传前区分源码、公开展示素材和私人训练资料；不提交密钥、个人数据或未经确认可公开的参考图。权重通过单独模型入口分发，使用前检查其模型卡和条件。本次文档更新不新增统一软件/素材许可证。
 
-随之失效的引用也已从本 README 清理：原先指向 `docs/前端角色主题实现_20260910.md`、`docs/GitHub上传整理清单.md`、`docs/新前端web适配_20260911.md` 的链接，以及只被旧主题系统读取的 `f_example/pm.png`、`bb.png`、`theme1.png`、`theme2.png` 和界面设计参考图 `example/37_1.png`。前端适配的说明已并入上文「[网页流程与角色包](#网页流程与角色包)」，不再依赖 `docs/`。
-
-README 顶部封面 `cover.png`、角色参考图 `dataset/37/images/012.png` 与 `013.png`、6 组输入/结果对比图（`input/` 与 `output/result/`）仍然保留，是本 README 展示效果所必需的素材。
+后续研究在这里记录实际参数、权重哈希、失败样本与固定种子对比；主项目 [Endlexx](https://github.com/ZerothXX/Endlexx) 汇总经过确认的研究成果和应用状态。
 
