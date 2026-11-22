@@ -1,0 +1,38 @@
+# Python and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+.claude/
+.dsh/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+config.local.json
+
+# Model weights and caches
+models/
+.cache/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+
+# Private inputs, character references, generated images, and experiments
+input/*
+!input/README.md
+dataset/*
+!dataset/README.md
+output/
+histories/
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
