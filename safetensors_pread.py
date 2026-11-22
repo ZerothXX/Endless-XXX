@@ -68,3 +68,4 @@ if __name__=='__main__':
   'scope':'bounded exact byte reads and parser parity; not a model quality assertion'}
  (Path(__file__).parent/'pread_verification.json').write_text(json.dumps(report,indent=2),encoding='utf8')
  print(json.dumps(report,indent=2))
+

@@ -24,3 +24,4 @@ def align_quant_state(model,out):
     for module in model.modules():
         if isinstance(module,bnb.nn.Linear4bit):handles.append(module.register_forward_pre_hook(align))
     return handles
+
