@@ -1,5 +1,7 @@
 # Endless-XXX：本地多参考图像转换
 
+[简体中文](README.md) | [English](README.en.md)
+
 本分支把项目主线切换为**完全本地运行的多参考图像编辑流程**：原图负责构图与场景，角色卡提供固定外观证据，本地提示规划器组织编辑约束，本地 Qwen-Image-2.1 完成生成。推理过程不调用 Codex、在线 GPT 或在线图像生成服务。
 
 > 2026-11-23 起，`main` 指向当前本地 Qwen 工作流。原主线完整保留在 [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23)。
