@@ -1,6 +1,8 @@
 # Endless-XXX
 
-[中文](README.md) · [English](README.en.md)
+[简体中文](README.md) | [English](README.en.md)
+
+After the branch exchange (2026-11-23), this `main` branch again contains the original SDXL LoRA training and inference route. The current local Qwen route is at [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23). The section below compares both routes and shows the 12 selected results from the former Qwen `main`.
 
 **Main project and application entry: [Endlexx](https://github.com/ZerothXX/Endlexx).** This repository owns character LoRA training and visual-transfer research across open-domain subjects. Endlexx provides the agent workbench, character knowledge, independent chats, context management and tool orchestration. The training core stays here; linking the homepages does not merge code or synchronize revisions.
 
@@ -27,7 +29,8 @@ This is an evolving research/engineering prototype. Faces, hands, clothing and a
 ## Contents
 
 - [Character and weights](#character-and-weights)
-- [Historical results](#historical-results)
+- [Route comparison and current Qwen results](#current-qwen-route)
+- [Legacy SDXL LoRA results](#legacy-sdxl-results)
 - [Repository layout](#repository-layout)
 - [Environment and models](#environment-and-models)
 - [Quick start](#quick-start)
@@ -45,9 +48,57 @@ The single-page workbench has character navigation and add/retrain controls on t
 
 <div align="center"><img src="web.png" width="800" alt="Endless-XXX research web interface"></div>
 
-## Historical results
+<a id="current-qwen-route"></a>
+<a id="current-qwen-route"></a>
+## Route Comparison and Current Qwen Results
 
-Previously published input/output pairs from `input/` and `output/result/`. Inputs were sourced from the internet. Animals and objects need further work; portraits have relatively better results. This is a qualitative observation, not a statistical evaluation. Original authors, individual licenses, actual seeds, complete effective settings and checkpoint hashes were not recorded. Do not substitute current defaults for historical records or treat these as new release acceptance results.
+> After the branch exchange, `main` again contains the original SDXL LoRA route. This section shows results from the former Qwen `main`; the current Qwen implementation and full guide are on [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23).
+
+| Aspect | Current `main`: legacy SDXL LoRA | Local Qwen multi-reference route: `legacy/main-2026-11-23` |
+|---|---|---|
+| Core method | Train an SDXL UNet LoRA per character, then transform the input with img2img and ControlNet-Canny | Use the source and character-card references as multi-image conditions for direct Qwen-Image-2.1 editing; no per-character LoRA training |
+| Character identity | Appearance is learned mainly in LoRA weights, using trigger words, class labels, and captions | The card supplies fixed identity/design evidence; the source controls pose, composition, and scene |
+| Prompting | Configuration, character-card descriptions, and subject policies organize prompts; a VLM may analyze the input | Local Qwen-Image-2.1-PE-I2I rewrites the prompt from the source, references, and constraints |
+| People and non-human subjects | SDXL uses separate denoising strengths and structural conditions for people, animals, and objects; each still needs visual review | Qwen uses separate editing constraints to preserve human/object structure and translate character design into the target material |
+| Stability | Depends on trained weights, inference settings, and random seed; historical gallery files lack complete seed and checkpoint hashes | Reuse a frozen recipe only for exact matches; otherwise replan locally and record input, card, code, prompt, and artifact hashes |
+| Quality review | Fixed-reference losses and automated tests do not replace visual quality review | The workflow saves results and records but does not automatically score or select images; a person reviews them |
+| Main models | SDXL base model, VAE, ControlNet-Canny, and character LoRA; corresponding local weights are required | Qwen-Image-2.1; Qwen-Image-2.1-PE-I2I is also needed to plan prompts for new inputs. Model files are not in this repository |
+
+### The 12 images from the current Qwen route
+
+These results came from the Qwen `main` before the branch exchange; they show the local multi-reference route now kept on `legacy/main-2026-11-23`. Each column uses the same source image: row one is the original, row two is character 37, and row three is Ayaka. Some images used different prompts or run strategies, so this gallery is for visual review, not a controlled A/B test.
+
+<table>
+  <thead><tr><th>Set</th><th>cat</th><th>cup</th><th>human1</th><th>human2</th><th>jian1</th><th>jian2</th></tr></thead>
+  <tbody>
+    <tr><th>Original</th>
+      <td><img src="docs/showcase/source/cat.png" width="140" alt="Original cat"></td>
+      <td><img src="docs/showcase/source/cup.jpg" width="140" alt="Original cup"></td>
+      <td><img src="docs/showcase/source/human1.png" width="140" alt="Original human1"></td>
+      <td><img src="docs/showcase/source/human2.png" width="140" alt="Original human2"></td>
+      <td><img src="docs/showcase/source/jian1.png" width="140" alt="Original jian1"></td>
+      <td><img src="docs/showcase/source/jian2.png" width="140" alt="Original jian2"></td></tr>
+    <tr><th>37</th>
+      <td><img src="docs/showcase/37/cat.png" width="140" alt="37 cat"></td>
+      <td><img src="docs/showcase/37/cup.png" width="140" alt="37 cup"></td>
+      <td><img src="docs/showcase/37/human1.png" width="140" alt="37 human1"></td>
+      <td><img src="docs/showcase/37/human2.png" width="140" alt="37 human2"></td>
+      <td><img src="docs/showcase/37/jian1.png" width="140" alt="37 jian1"></td>
+      <td><img src="docs/showcase/37/jian2.png" width="140" alt="37 jian2"></td></tr>
+    <tr><th>Ayaka</th>
+      <td><img src="docs/showcase/ayaka/cat.png" width="140" alt="Ayaka cat"></td>
+      <td><img src="docs/showcase/ayaka/cup.png" width="140" alt="Ayaka cup"></td>
+      <td><img src="docs/showcase/ayaka/human1.png" width="140" alt="Ayaka human1"></td>
+      <td><img src="docs/showcase/ayaka/human2.png" width="140" alt="Ayaka human2"></td>
+      <td><img src="docs/showcase/ayaka/jian1.png" width="140" alt="Ayaka jian1"></td>
+      <td><img src="docs/showcase/ayaka/jian2.png" width="140" alt="Ayaka jian2"></td></tr>
+  </tbody>
+</table>
+
+<a id="legacy-sdxl-results"></a>
+## Legacy SDXL LoRA results
+
+Previously published historical input/output pairs from the legacy SDXL LoRA route in `input/` and `output/result/`. Inputs were sourced from the internet. Animals and objects need further work; portraits have relatively better results. This is a qualitative observation, not a statistical evaluation. Original authors, individual licenses, actual seeds, complete effective settings and checkpoint hashes were not recorded. Do not substitute current defaults for historical records or treat these as new release acceptance results.
 
 <table>
   <tr><th>Subject</th><th>Input</th><th>Historical output</th></tr>

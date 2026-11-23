@@ -1,6 +1,8 @@
 # Endless-XXX
 
-[中文](README.md) · [English](README.en.md)
+[简体中文](README.md) | [English](README.en.md)
+
+分支互换后（2026-11-23），此 `main` 恢复为原版 SDXL LoRA 训练与推理路线；当前本地 Qwen 路线位于 [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23)。下文列出两条路线差异，并展示此前 Qwen `main` 的 12 张成图。
 
 **主项目与应用入口：[Endlexx](https://github.com/ZerothXX/Endlexx)。** 本仓库负责角色 LoRA 训练与开放域主体视觉迁移研究；Endlexx 负责 Agent 工作台、角色知识、多对话、上下文与工具编排。训练核心继续在本仓库维护，两个项目不因首页关联而合并代码或同步版本。
 
@@ -30,7 +32,8 @@
 ## 目录
 
 * [角色与权重](#角色与权重)
-* [生成效果展示](#生成效果展示)
+* [技术路线对比与当前 Qwen 成图](#current-qwen-route)
+* [旧版 SDXL LoRA 历史结果](#legacy-sdxl-results)
 * [项目结构](#项目结构)
 * [环境与模型准备](#环境与模型准备)
 * [快速开始](#快速开始)
@@ -56,9 +59,57 @@
   <img src="web.png" width="800" alt="web前端">
 </div>
 
-## 生成效果展示
+<a id="current-qwen-route"></a>
+<a id="current-qwen-route"></a>
+## 技术路线对比与当前 Qwen 成图
 
-以下为已公开的历史输入/输出对比，左侧来自 `input/`，右侧来自 `output/result/`（图片取材自网络）。
+> 分支互换后，`main` 恢复为原版 SDXL LoRA 路线；本节展示此前 Qwen `main` 生成的结果，当前 Qwen 实现和完整说明保存在 [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23)。
+
+| 维度 | 当前 `main`：旧版 SDXL LoRA | Qwen 本地多参考路线：`legacy/main-2026-11-23` |
+|---|---|---|
+| 核心方法 | 为角色训练 SDXL UNet LoRA，推理时通过 img2img 和 ControlNet-Canny 转换输入图 | 原图与角色卡参考作为多图条件，使用 Qwen-Image-2.1 直接编辑，不为每个角色训练 LoRA |
+| 角色信息 | 角色外观主要学习进 LoRA 权重，训练文本由触发词、类别与标注构成 | 角色卡固定提供身份/设计证据；原图控制姿态、构图和场景 |
+| 提示词 | 配置、角色卡描述和主体策略组织提示，VLM 可参与输入分析 | 本地 Qwen-Image-2.1-PE-I2I 根据原图、参考图和约束重写提示 |
+| 人物与非人物 | SDXL 按人物、动物、物品设置不同重绘强度和结构条件；仍需逐类验收 | Qwen 使用不同编辑约束保留人体或物体结构，并将角色设计转译到目标材质 |
+| 稳定性 | 依赖训练权重、推理参数和随机种子；历史展示图未记录完整种子与 checkpoint 哈希 | 精确匹配时复用冻结配方，否则本地重规划；记录输入、角色卡、代码、提示与产物哈希 |
+| 质量判定 | 固定参考损失和自动化测试不能替代图像质量验收 | 流程自动保存结果和记录；不自动打分或筛图，最终仍由人工看图 |
+| 主要模型 | SDXL 底模、VAE、ControlNet-Canny 和角色 LoRA；依赖相应本地权重 | Qwen-Image-2.1；新输入自动规划另需 Qwen-Image-2.1-PE-I2I。模型文件不放入仓库 |
+
+### 当前 Qwen 路线的 12 张成图
+
+以下结果来自交换前的 Qwen `main`，展示的是如今保留在 `legacy/main-2026-11-23` 分支的本地多参考生成路线。每列对应同一张原图：第一行为原图，第二行为角色 37，第三行为绫华。不同图片可能使用不同提示和运行策略，因此用于直观查看，不是控制变量 A/B 测试。
+
+<table>
+  <thead><tr><th>类别</th><th>cat</th><th>cup</th><th>human1</th><th>human2</th><th>jian1</th><th>jian2</th></tr></thead>
+  <tbody>
+    <tr><th>原图</th>
+      <td><img src="docs/showcase/source/cat.png" width="140" alt="原图 cat"></td>
+      <td><img src="docs/showcase/source/cup.jpg" width="140" alt="原图 cup"></td>
+      <td><img src="docs/showcase/source/human1.png" width="140" alt="原图 human1"></td>
+      <td><img src="docs/showcase/source/human2.png" width="140" alt="原图 human2"></td>
+      <td><img src="docs/showcase/source/jian1.png" width="140" alt="原图 jian1"></td>
+      <td><img src="docs/showcase/source/jian2.png" width="140" alt="原图 jian2"></td></tr>
+    <tr><th>37</th>
+      <td><img src="docs/showcase/37/cat.png" width="140" alt="37 cat"></td>
+      <td><img src="docs/showcase/37/cup.png" width="140" alt="37 cup"></td>
+      <td><img src="docs/showcase/37/human1.png" width="140" alt="37 human1"></td>
+      <td><img src="docs/showcase/37/human2.png" width="140" alt="37 human2"></td>
+      <td><img src="docs/showcase/37/jian1.png" width="140" alt="37 jian1"></td>
+      <td><img src="docs/showcase/37/jian2.png" width="140" alt="37 jian2"></td></tr>
+    <tr><th>绫华</th>
+      <td><img src="docs/showcase/ayaka/cat.png" width="140" alt="绫华 cat"></td>
+      <td><img src="docs/showcase/ayaka/cup.png" width="140" alt="绫华 cup"></td>
+      <td><img src="docs/showcase/ayaka/human1.png" width="140" alt="绫华 human1"></td>
+      <td><img src="docs/showcase/ayaka/human2.png" width="140" alt="绫华 human2"></td>
+      <td><img src="docs/showcase/ayaka/jian1.png" width="140" alt="绫华 jian1"></td>
+      <td><img src="docs/showcase/ayaka/jian2.png" width="140" alt="绫华 jian2"></td></tr>
+  </tbody>
+</table>
+
+<a id="legacy-sdxl-results"></a>
+## 旧版 SDXL LoRA 历史结果
+
+以下为旧版 SDXL LoRA 路线公开的历史输入/输出对比，左侧来自 `input/`，右侧来自 `output/result/`（图片取材自网络）。
 
 在动物和物体的结果处理上还有改进空间，在人形肖像上效果相对较好。这是定性观察，非统计评测。原始作者与逐图许可、实际种子、完整生效配置和 checkpoint 哈希未记录；不能用当前默认值补作历史参数，也不将这些图当作新版本验收。
 
