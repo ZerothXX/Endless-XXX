@@ -4,11 +4,11 @@
 
 This branch makes the project’s primary workflow a **fully local, multi-reference image-editing pipeline**. The source image controls composition and scene; a character card provides fixed appearance evidence; a local prompt planner organizes editing constraints; and local Qwen-Image-2.1 weights generate the result. Inference does not call Codex, online GPT, or an online image-generation service.
 
-> Since 2026-11-23, `main` has pointed to the local Qwen workflow. The previous main line is preserved in [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23).
+> After the branch exchange (2026-11-23), `main` again points to the original SDXL LoRA route. The current local Qwen route is at [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23). The original `main` README now includes a route comparison and the 12 selected results from the current Qwen route.
 
 ## Two Generations of the Workflow
 
-| Aspect | Original `main` (now the legacy branch) | Current `main` |
+| Aspect | Original `main` (now the current `main`, SDXL LoRA) | Current local Qwen route (`legacy/main-2026-11-23`) |
 |---|---|---|
 | Core method | Train an SDXL LoRA for each character, then run inference on an input image | Use the source image and fixed character references together as conditions for direct multi-image editing with Qwen-Image-2.1 |
 | Character identity | Carried mainly by character-specific LoRA weights | Provided explicitly through a versioned character card, fixed references, and locally generated instructions; no per-character LoRA training |
@@ -17,7 +17,7 @@ This branch makes the project’s primary workflow a **fully local, multi-refere
 | Stability controls | Depends on trained weights and the legacy inference chain | Reuse a frozen local recipe only when every input hash matches; otherwise replan locally. Hashes are checked for inputs, character cards, code, and generated files, with prompts, model paths, and parameters recorded |
 | Quality review | Determined by the legacy workflow | A completed run guarantees technical artifacts only. It does not automatically score, select, or accept images; final review is visual and manual |
 
-See the [legacy README](https://github.com/ZerothXX/Endless-XXX/blob/legacy/main-2026-11-23/README.md) for the original workflow. Each route remains on its own branch; they do not share a default execution entry point.
+The original SDXL LoRA route now lives in the [`main` README](https://github.com/ZerothXX/Endless-XXX/blob/main/README.md), which includes the comparison and current Qwen gallery. The local Qwen route remains at [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23). Each route keeps its complete implementation on its own branch and they do not share a default execution entry point.
 
 ## Current Pipeline
 
@@ -77,7 +77,7 @@ $env:ENDLESS_PE_I2I_MODEL = 'E:\项目\Endless-XXX-models\Qwen-Image-2.1-PE-I2I'
 
 These paths apply only to the research machine; change all three variables to local paths on another computer. Model weights are not uploaded to GitHub. Download the complete files from the corresponding model cards and follow each model’s license. The Qwen-Image-2.1 model card specifies the Qwen Research License. For PE-I2I, use its own model card and any license file distributed with the weights. The project makes no unverified minimum-VRAM promise.
 
-**Building character cards is a separate path that is not delivered with the current main branch.** The old local builder expected Qwen3-VL-4B-Instruct, Grounding DINO Tiny, and SAM2, and depended on `local_vision_tasks.py` and `local_clothing_masks.py`; those workers are not in the published branch, and Qwen3-VL-4B-Instruct and SAM2 are missing from the configured workspace locations. These are not required to generate an image when a valid card already exists. Do not download them just to run the generation workflow.
+**Building character cards is a separate path that is not delivered with this Qwen branch.** The old local builder expected Qwen3-VL-4B-Instruct, Grounding DINO Tiny, and SAM2, and depended on `local_vision_tasks.py` and `local_clothing_masks.py`; those workers are not in the published branch, and Qwen3-VL-4B-Instruct and SAM2 are missing from the configured workspace locations. These are not required to generate an image when a valid card already exists. Do not download them just to run the generation workflow.
 
 ## Run
 

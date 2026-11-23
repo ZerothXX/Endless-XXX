@@ -4,11 +4,11 @@
 
 本分支把项目主线切换为**完全本地运行的多参考图像编辑流程**：原图负责构图与场景，角色卡提供固定外观证据，本地提示规划器组织编辑约束，本地 Qwen-Image-2.1 完成生成。推理过程不调用 Codex、在线 GPT 或在线图像生成服务。
 
-> 2026-11-23 起，`main` 指向当前本地 Qwen 工作流。原主线完整保留在 [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23)。
+> 分支互换后（2026-11-23），`main` 恢复为原 SDXL LoRA 路线；当前本地 Qwen 路线位于 [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23)。原版 `main` 的 README 展示了两条路线对比和当前 Qwen 路线的 12 张成图。
 
 ## 两代技术路线
 
-| 维度 | 原 `main`（现历史分支） | 当前 `main` |
+| 维度 | 原版 `main`（现为当前 `main`，SDXL LoRA） | 当前本地 Qwen 路线（`legacy/main-2026-11-23`） |
 |---|---|---|
 | 核心方法 | 为角色训练 SDXL LoRA，再对输入图推理 | 原图与固定角色参考共同作为条件，直接用 Qwen-Image-2.1 多图编辑 |
 | 角色信息 | 主要由角色 LoRA 权重承载 | 由版本化角色卡、固定参考图和本地生成提示显式提供；不为每个角色训练 LoRA |
@@ -17,7 +17,7 @@
 | 稳定性控制 | 依赖训练权重与原推理链路 | 精确匹配时可复用本地冻结配方；否则重新规划；对输入、角色卡、代码和生成物做哈希校验，并记录提示、模型路径与参数 |
 | 质量验收 | 由旧工作流决定 | 运行只保证技术交付；不自动打分、筛图或判定合格，最终仍需人工看图 |
 
-原主线详见[历史分支 README](https://github.com/ZerothXX/Endless-XXX/blob/legacy/main-2026-11-23/README.md)。新旧路线的完整实现各自在对应分支中保留；两者不会共享同一个默认运行入口。
+原版 SDXL LoRA 路线现位于 [`main` README](https://github.com/ZerothXX/Endless-XXX/blob/main/README.md)，其中包含技术对比和当前 Qwen 成图展示。当前 Qwen 路线保留在 [`legacy/main-2026-11-23`](https://github.com/ZerothXX/Endless-XXX/tree/legacy/main-2026-11-23)；两条路线的完整实现各自在对应分支中保留，不共享默认运行入口。
 
 ## 当前流程
 
